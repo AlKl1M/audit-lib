@@ -1,12 +1,12 @@
 package com.alkl1m.auditlogspringbootautoconfigure.aspect;
 
 import com.alkl1m.auditlogspringbootautoconfigure.annotation.AuditLog;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.boot.logging.LogLevel;
 import org.springframework.stereotype.Component;
 
@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 @Component
 public class AuditLogAspect {
 
-    private Logger logger = LoggerFactory.getLogger(AuditLogAspect.class);
+    private Logger logger = LogManager.getLogger(AuditLogAspect.class);
 
     /**
      * Определяет точку среза для методов, помеченных @AuditLog.
