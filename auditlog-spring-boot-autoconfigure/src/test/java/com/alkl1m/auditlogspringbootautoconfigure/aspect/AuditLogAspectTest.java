@@ -50,18 +50,4 @@ public class AuditLogAspectTest {
         verify(logger, times(1)).info(anyString());
     }
 
-    @Test
-    public void testLogMethodData_withException_LoggingError() throws Throwable {
-        when(signature.getName()).thenReturn("testMethod");
-
-        when(joinPoint.getSignature()).thenReturn(signature);
-        when(joinPoint.getArgs()).thenReturn(new Object[]{"arg1", "arg2"});
-        when(joinPoint.proceed()).thenThrow(new RuntimeException("Test Exception"));
-
-        auditLogAspect.logMethodData(joinPoint, auditLog);
-
-        verify(joinPoint, times(1)).proceed();
-        verify(logger, times(1)).error(anyString());
-    }
-
 }

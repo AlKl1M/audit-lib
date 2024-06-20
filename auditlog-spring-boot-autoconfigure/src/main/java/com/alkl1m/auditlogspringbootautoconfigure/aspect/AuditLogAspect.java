@@ -40,20 +40,17 @@ public class AuditLogAspect {
      *
      * @param joinPoint объект, представляющий точку соединения.
      * @param auditLog аннотация, содержащая информацию о логировании.
+     * @return результат выполнения реального метода.
      */
     @Around(value = "auditLogPointcut(auditLog)", argNames = "joinPoint,auditLog")
-    public void logMethodData(ProceedingJoinPoint joinPoint, AuditLog auditLog) {
+    public Object logMethodData(ProceedingJoinPoint joinPoint, AuditLog auditLog) throws Throwable {
         String methodName = joinPoint.getSignature().getName();
         Object[] args = joinPoint.getArgs();
 
-        try {
-            Object result = joinPoint.proceed();
-            String logMessage = "Method: " + methodName + ", Args: " + argsToString(args) + ", Result: " + (result != null ? result.toString() : "void");
-            logMessage(logMessage, auditLog.logLevel());
-        } catch (Throwable e) {
-            String errorMessage = "Exception in method: " + methodName + ", Exception: " + e.toString();
-            logMessage(errorMessage, LogLevel.ERROR);
-        }
+        Object result = joinPoint.proceed();
+        String logMessage = "Method: " + methodName + ", Args: " + argsToString(args) + ", Result: " + (result != null ? result.toString() : "void");
+        logMessage(logMessage, auditLog.logLevel());
+        return result;
     }
 
     /**
