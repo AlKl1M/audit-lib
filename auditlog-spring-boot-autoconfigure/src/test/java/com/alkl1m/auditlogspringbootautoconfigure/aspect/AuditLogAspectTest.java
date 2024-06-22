@@ -11,10 +11,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.logging.LogLevel;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class AuditLogAspectTest {
@@ -35,12 +34,42 @@ public class AuditLogAspectTest {
     private AuditLogAspect auditLogAspect;
 
     @Test
-    public void testLogMethodData_withValidPayload_LoggingData() throws Throwable {
+    public void testLogMethodData_withValidPayload_loggingData() throws Throwable {
         when(signature.getName()).thenReturn("testMethod");
 
         when(joinPoint.getSignature()).thenReturn(signature);
         when(joinPoint.getArgs()).thenReturn(new Object[]{"arg1", "arg2"});
         when(joinPoint.proceed()).thenReturn("result");
+
+        when(auditLog.logLevel()).thenReturn(LogLevel.INFO);
+
+        auditLogAspect.logMethodData(joinPoint, auditLog);
+
+        verify(joinPoint, times(1)).proceed();
+        verify(logger, times(1)).info(anyString());
+    }
+
+    @Test
+    public void testLogMethodData_withException_loggingException() throws Throwable {
+        when(signature.getName()).thenReturn("testMethod");
+
+        when(joinPoint.getSignature()).thenReturn(signature);
+        when(joinPoint.getArgs()).thenReturn(new Object[]{"arg1", "arg2"});
+        when(joinPoint.proceed()).thenThrow(new RuntimeException("Test exception"));
+
+        assertThrows(RuntimeException.class, () -> auditLogAspect.logMethodData(joinPoint, auditLog));
+
+        verify(joinPoint, times(1)).proceed();
+        verify(logger, times(1)).error(anyString());
+    }
+
+    @Test
+    public void testLogMethodData_withNullReturn_givesNullResult() throws Throwable {
+        when(signature.getName()).thenReturn("testMethod");
+
+        when(joinPoint.getSignature()).thenReturn(signature);
+        when(joinPoint.getArgs()).thenReturn(new Object[]{"arg1", "arg2"});
+        when(joinPoint.proceed()).thenReturn(null);
 
         when(auditLog.logLevel()).thenReturn(LogLevel.INFO);
 
