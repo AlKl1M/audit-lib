@@ -47,10 +47,17 @@ public class AuditLogAspect {
         String methodName = joinPoint.getSignature().getName();
         Object[] args = joinPoint.getArgs();
 
-        Object result = joinPoint.proceed();
-        String logMessage = "Method: " + methodName + ", Args: " + argsToString(args) + ", Result: " + (result != null ? result.toString() : "void");
-        logMessage(logMessage, auditLog.logLevel());
-        return result;
+        String logMessage;
+        try {
+            Object result = joinPoint.proceed();
+            logMessage = "Method: " + methodName + ", Args: " + argsToString(args) + ", Result: " + (result != null ? result.toString() : "void");
+            logMessage(logMessage, auditLog.logLevel());
+            return result;
+        } catch (Throwable e) {
+            logMessage = "Exception in method: " + methodName + ", Args: " + argsToString(args) + ", Exception: " + e.getMessage();
+            logMessage(logMessage, LogLevel.ERROR);
+            throw e;
+        }
     }
 
     /**
