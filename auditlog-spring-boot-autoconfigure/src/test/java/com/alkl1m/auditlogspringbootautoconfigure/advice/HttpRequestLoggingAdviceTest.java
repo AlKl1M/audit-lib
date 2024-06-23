@@ -31,6 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 @AutoConfigureMockMvc
 @AutoConfigureWebClient
 public class HttpRequestLoggingAdviceTest {
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -54,9 +55,12 @@ public class HttpRequestLoggingAdviceTest {
 
     @RestController
     public static class TestController {
+
         @PostMapping("/test2")
         public String test(@RequestBody String key) {
             return "hello";
         }
+
     }
+
 }

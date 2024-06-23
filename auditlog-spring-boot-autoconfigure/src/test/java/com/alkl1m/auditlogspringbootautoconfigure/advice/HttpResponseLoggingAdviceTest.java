@@ -52,9 +52,12 @@ class HttpResponseLoggingAdviceTest {
 
     @RestController
     public static class TestController {
+
         @GetMapping("/test")
         public String test() {
             return "hello";
         }
+
     }
+
 }

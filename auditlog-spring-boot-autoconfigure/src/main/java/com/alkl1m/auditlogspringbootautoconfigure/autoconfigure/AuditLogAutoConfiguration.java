@@ -9,8 +9,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-import java.util.Map;
-
 /**
  * Конфигурационный класс для AuditLog.
  *
@@ -29,12 +27,8 @@ public class AuditLogAutoConfiguration implements WebMvcConfigurer {
      * @return экземпляр HttpRequestLoggingAdvice.
      */
     @Bean
-    public HttpRequestLoggingAdvice httpResponseBodyAdvice() {
-        Map<String, Object> beans = applicationContext.getBeansWithAnnotation(EnableHttpLogging.class);
-        if (!beans.isEmpty()) {
-            return new HttpRequestLoggingAdvice();
-        }
-        return null;
+    public HttpRequestLoggingAdvice httpRequestLoggingAdvice() {
+        return applicationContext.getBeansWithAnnotation(EnableHttpLogging.class).isEmpty() ? null : new HttpRequestLoggingAdvice();
     }
 
     /**
@@ -45,11 +39,7 @@ public class AuditLogAutoConfiguration implements WebMvcConfigurer {
      */
     @Bean
     public HttpResponseLoggingAdvice httpResponseLoggingAdvice() {
-        Map<String, Object> beans = applicationContext.getBeansWithAnnotation(EnableHttpLogging.class);
-        if (!beans.isEmpty()) {
-            return new HttpResponseLoggingAdvice();
-        }
-        return null;
+        return applicationContext.getBeansWithAnnotation(EnableHttpLogging.class).isEmpty() ? null : new HttpResponseLoggingAdvice();
     }
 
 }

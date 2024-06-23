@@ -2,6 +2,7 @@ package com.alkl1m.auditlogspringbootautoconfigure.advice;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.Nullable;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -10,6 +11,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
+import org.springframework.lang.NonNull;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -27,13 +29,15 @@ public class HttpResponseLoggingAdvice implements ResponseBodyAdvice<Object> {
 
 
     /**
+     * Проверка поддержки метода.
+     *
      * @param returnType тип возвращаемого значения метода.
      * @param converterType тип конвертера сообщений.
      * @return всегда true - advice применим ко всем типам возвращаемых значений.
      */
     @Override
-    public boolean supports(MethodParameter returnType,
-                            Class<? extends HttpMessageConverter<?>> converterType) {
+    public boolean supports(@NonNull MethodParameter returnType,
+                            @NonNull Class<? extends HttpMessageConverter<?>> converterType) {
         return true;
     }
 
@@ -41,6 +45,7 @@ public class HttpResponseLoggingAdvice implements ResponseBodyAdvice<Object> {
      * Отлавливает после отработки метода контроллера request и response
      * и логирует сперва данные про request (метод и uri), а затем
      * логирует данные response.
+     *
      * @param body тело ответа.
      * @param returnType тип возвращаемого значения метода.
      * @param selectedContentType выбранный тип контента.
@@ -50,10 +55,12 @@ public class HttpResponseLoggingAdvice implements ResponseBodyAdvice<Object> {
      * @return тело ответа.
      */
     @Override
-    public Object beforeBodyWrite(Object body, MethodParameter returnType,
-                                  MediaType selectedContentType,
-                                  Class<? extends HttpMessageConverter<?>> selectedConverterType,
-                                  ServerHttpRequest request, ServerHttpResponse response) {
+    public Object beforeBodyWrite(@Nullable Object body,
+                                  @NonNull MethodParameter returnType,
+                                  @NonNull MediaType selectedContentType,
+                                  @NonNull Class<? extends HttpMessageConverter<?>> selectedConverterType,
+                                  @NonNull ServerHttpRequest request,
+                                  @NonNull ServerHttpResponse response) {
         ObjectMapper mapper = new ObjectMapper();
         HttpServletResponse httpServletResponse = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getResponse();
         try {
