@@ -11,7 +11,7 @@
         <Root level="INFO">
             <AppenderRef ref="ConsoleAppender"/>
         </Root>
-        <Logger name="com.alkl1m.auditlogspringbootautoconfigure.advice" level="INFO" additivity="false">
+        <Logger name="com.alkl1m.auditlogspringbootautoconfigure.aspect" level="INFO" additivity="false">
             <AppenderRef ref="ConsoleAppender"/>
         </Logger>
     </Loggers>

@@ -8,7 +8,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Аннотация для логгирования метода в соответствии
+ * Аннотация для логирования метода в соответствии
  * с указанным уровнем
  * @author alkl1m
  */

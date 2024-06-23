@@ -38,7 +38,7 @@ public class HttpAppender extends AbstractAppender {
      * Фабричный метод для создания нового экземпляра HttpAppender.
      *
      * @param name имя нового экземпляра.
-     * @param filter объект для фильтрации событий логгирования перед их отправкой.
+     * @param filter объект для фильтрации событий логирования перед их отправкой.
      * @return экземпляр HttpAppender.
      */
     @PluginFactory
@@ -47,9 +47,9 @@ public class HttpAppender extends AbstractAppender {
     }
 
     /**
-     * Метод для добавления нового события логгирования в лог-файл.
+     * Метод для добавления нового события логирования в лог-файл.
      *
-     * @param event информация о событии логгирования (уровень, сообщение, метаданные).
+     * @param event информация о событии логирования (уровень, сообщение, метаданные).
      */
     @Override
     public void append(LogEvent event) {
@@ -64,14 +64,14 @@ public class HttpAppender extends AbstractAppender {
     }
 
     /**
-     * @return карту событий логгирования.
+     * @return карту событий логирования.
      */
     public ConcurrentMap<String, LogEvent> getEventMap() {
         return eventMap;
     }
 
     /**
-     * @param eventMap карта событий логгирования.
+     * @param eventMap карта событий логирования.
      */
     public void setEventMap(ConcurrentMap<String, LogEvent> eventMap) {
         this.eventMap = eventMap;
