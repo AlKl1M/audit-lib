@@ -16,7 +16,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class AuditLogAspectTest {
+class AuditLogAspectTest {
 
     @Mock
     private ProceedingJoinPoint joinPoint;
@@ -34,7 +34,7 @@ public class AuditLogAspectTest {
     private AuditLogAspect auditLogAspect;
 
     @Test
-    public void testLogMethodData_withValidPayload_loggingData() throws Throwable {
+    void testLogMethodData_withValidPayload_loggingData() throws Throwable {
         when(signature.getName()).thenReturn("testMethod");
 
         when(joinPoint.getSignature()).thenReturn(signature);
@@ -50,7 +50,7 @@ public class AuditLogAspectTest {
     }
 
     @Test
-    public void testLogMethodData_withException_loggingException() throws Throwable {
+    void testLogMethodData_withException_loggingException() throws Throwable {
         when(signature.getName()).thenReturn("testMethod");
 
         when(joinPoint.getSignature()).thenReturn(signature);
@@ -64,7 +64,7 @@ public class AuditLogAspectTest {
     }
 
     @Test
-    public void testLogMethodData_withNullReturn_givesNullResult() throws Throwable {
+    void testLogMethodData_withNullReturn_givesNullResult() throws Throwable {
         when(signature.getName()).thenReturn("testMethod");
 
         when(joinPoint.getSignature()).thenReturn(signature);
