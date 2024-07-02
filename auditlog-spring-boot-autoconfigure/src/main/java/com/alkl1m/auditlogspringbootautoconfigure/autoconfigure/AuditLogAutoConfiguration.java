@@ -7,6 +7,8 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import com.alkl1m.auditlogspringbootautoconfigure.aspect.AuditLogAspect;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 
 /**
  * Конфигурационный класс для AuditLog.
@@ -20,6 +22,18 @@ public class AuditLogAutoConfiguration implements WebMvcConfigurer {
 
     public AuditLogAutoConfiguration(ApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
+    }
+    
+    /**
+     * Создает бин AuditLogAspect в контексте приложения,
+     * если в контексте отсутствует другой бин этого типа.
+     *
+     * @return экземпляр AuditLogAspect.
+     */
+    @Bean
+    @ConditionalOnMissingBean
+    public AuditLogAspect aspect() {
+        return new AuditLogAspect();
     }
 
     /**
@@ -44,4 +58,3 @@ public class AuditLogAutoConfiguration implements WebMvcConfigurer {
         return applicationContext.getBeansWithAnnotation(EnableHttpLogging.class).isEmpty() ? null : new HttpResponseLoggingAdvice();
     }
 
-}
