@@ -34,7 +34,7 @@ class HttpResponseLoggingAdviceTest {
     private MockMvc mockMvc;
 
     @Test
-    public void textHttpResponseLoggingAdvice_withRequestBody_LogsAreValid() throws Exception {
+    void textHttpResponseLoggingAdvice_withRequestBody_LogsAreValid() throws Exception {
         var loggerContext = LoggerContext.getContext(false);
         var logger = (Logger) loggerContext.getLogger(HttpResponseLoggingAdvice.class);
         var appender = new ListAppender("List");
@@ -46,8 +46,7 @@ class HttpResponseLoggingAdviceTest {
 
         List<String> loggedStrings =
                 appender.getEvents().stream().map(event -> event.getMessage().toString()).collect(Collectors.toList());
-        assertTrue(loggedStrings.contains("Request method: GET request url: http://localhost/test"));
-        assertTrue(loggedStrings.contains("Response status: 200 Response body: \"hello\""));
+        assertTrue(loggedStrings.contains("Request method: GET request url: http://localhost/test response status: 200 response body: \"hello\""));
     }
 
     @RestController

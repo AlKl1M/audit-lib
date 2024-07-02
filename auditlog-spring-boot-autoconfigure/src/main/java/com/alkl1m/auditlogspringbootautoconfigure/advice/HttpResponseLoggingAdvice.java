@@ -17,6 +17,8 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 
+import java.util.Objects;
+
 /**
  * Advice для логирования HTTP-ответов.
  *
@@ -31,7 +33,7 @@ public class HttpResponseLoggingAdvice implements ResponseBodyAdvice<Object> {
     /**
      * Проверка поддержки метода.
      *
-     * @param returnType тип возвращаемого значения метода.
+     * @param returnType    тип возвращаемого значения метода.
      * @param converterType тип конвертера сообщений.
      * @return всегда true - advice применим ко всем типам возвращаемых значений.
      */
@@ -46,12 +48,12 @@ public class HttpResponseLoggingAdvice implements ResponseBodyAdvice<Object> {
      * и логирует сперва данные про request (метод и uri), а затем
      * логирует данные response.
      *
-     * @param body тело ответа.
-     * @param returnType тип возвращаемого значения метода.
-     * @param selectedContentType выбранный тип контента.
+     * @param body                  тело ответа.
+     * @param returnType            тип возвращаемого значения метода.
+     * @param selectedContentType   выбранный тип контента.
      * @param selectedConverterType выбранный тип конвертера.
-     * @param request объект запроса.
-     * @param response объект ответа.
+     * @param request               объект запроса.
+     * @param response              объект ответа.
      * @return тело ответа.
      */
     @Override
@@ -63,11 +65,17 @@ public class HttpResponseLoggingAdvice implements ResponseBodyAdvice<Object> {
                                   @NonNull ServerHttpResponse response) {
         ObjectMapper mapper = new ObjectMapper();
         HttpServletResponse httpServletResponse = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getResponse();
-        try {
-            logger.info("Request method: " + request.getMethod() + " request url: " + request.getURI());
-            logger.info("Response status: " + httpServletResponse.getStatus() + " Response body: " + mapper.writeValueAsString(body));
-        } catch (JsonProcessingException e) {
-            logger.error("JsonProcessingException while parsing body: " + e.getMessage());
+        if (httpServletResponse != null) {
+            try {
+                String responseBody = Objects.isNull(body) ? "{}" : mapper.writeValueAsString(body);
+                logger.info("Request method: %s request url: %s response status: %s response body: %s"
+                        .formatted(request.getMethod(),
+                                request.getURI(),
+                                httpServletResponse.getStatus(),
+                                responseBody));
+            } catch (JsonProcessingException e) {
+                logger.error("JsonProcessingException while parsing body: %s".formatted(e.getMessage()));
+            }
         }
         return body;
     }

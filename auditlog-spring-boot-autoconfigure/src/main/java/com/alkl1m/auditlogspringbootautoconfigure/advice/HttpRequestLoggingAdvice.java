@@ -14,6 +14,7 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestBodyAdvice;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.Objects;
 
 /**
  * Advice для логирования HTTP-запросов.
@@ -76,9 +77,9 @@ public class HttpRequestLoggingAdvice implements RequestBodyAdvice {
                                 @NonNull Class<? extends HttpMessageConverter<?>> converterType) {
         ObjectMapper mapper = new ObjectMapper();
         try {
-            logger.info("Request body: " + mapper.writeValueAsString(body));
+            logger.info("Request body: %s".formatted(Objects.isNull(body) ? "{}" : mapper.writeValueAsString(body)));
         } catch (JsonProcessingException e) {
-            logger.error("JsonProcessingException while parsing body: " + e.getMessage());
+            logger.error("JsonProcessingException while parsing body: %s".formatted(e.getMessage()));
         }
         return body;
     }

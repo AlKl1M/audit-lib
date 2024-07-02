@@ -30,13 +30,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 @ContextConfiguration(classes = {HttpRequestLoggingAdviceTest.TestController.class, HttpRequestLoggingAdvice.class})
 @AutoConfigureMockMvc
 @AutoConfigureWebClient
-public class HttpRequestLoggingAdviceTest {
+class HttpRequestLoggingAdviceTest {
 
     @Autowired
     private MockMvc mockMvc;
 
     @Test
-    public void textHttpRequestLoggingAdvice_withRequestBody_LogsAreValid() throws Exception {
+    void textHttpRequestLoggingAdvice_withRequestBody_LogsAreValid() throws Exception {
         var loggerContext = LoggerContext.getContext(false);
         var logger = (Logger) loggerContext.getLogger(HttpRequestLoggingAdvice.class);
         var appender = new ListAppender("List");
