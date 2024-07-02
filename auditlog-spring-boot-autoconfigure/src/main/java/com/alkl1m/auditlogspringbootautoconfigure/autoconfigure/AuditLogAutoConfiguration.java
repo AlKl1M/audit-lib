@@ -23,7 +23,7 @@ public class AuditLogAutoConfiguration implements WebMvcConfigurer {
     public AuditLogAutoConfiguration(ApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
     }
-    
+
     /**
      * Создает бин AuditLogAspect в контексте приложения,
      * если в контексте отсутствует другой бин этого типа.
@@ -57,4 +57,5 @@ public class AuditLogAutoConfiguration implements WebMvcConfigurer {
     public HttpResponseLoggingAdvice httpResponseLoggingAdvice() {
         return applicationContext.getBeansWithAnnotation(EnableHttpLogging.class).isEmpty() ? null : new HttpResponseLoggingAdvice();
     }
+}
 
