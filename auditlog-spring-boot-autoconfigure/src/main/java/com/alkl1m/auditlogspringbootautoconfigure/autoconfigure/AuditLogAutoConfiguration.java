@@ -3,6 +3,14 @@ package com.alkl1m.auditlogspringbootautoconfigure.autoconfigure;
 import com.alkl1m.auditlogspringbootautoconfigure.advice.HttpRequestLoggingAdvice;
 import com.alkl1m.auditlogspringbootautoconfigure.advice.HttpResponseLoggingAdvice;
 import com.alkl1m.auditlogspringbootautoconfigure.annotation.EnableHttpLogging;
+import com.alkl1m.auditlogspringbootautoconfigure.appender.KafkaAppender;
+import jakarta.annotation.PostConstruct;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.Appender;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.config.LoggerConfig;
+import org.apache.logging.log4j.core.config.Property;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -57,5 +65,39 @@ public class AuditLogAutoConfiguration implements WebMvcConfigurer {
     public HttpResponseLoggingAdvice httpResponseLoggingAdvice() {
         return applicationContext.getBeansWithAnnotation(EnableHttpLogging.class).isEmpty() ? null : new HttpResponseLoggingAdvice();
     }
+
+    @PostConstruct
+    public void configureLogger() {
+        configureAppender();
+    }
+
+    private void configureAppender() {
+        LoggerContext context = (LoggerContext) LogManager.getContext(false);
+        org.apache.logging.log4j.core.config.Configuration config = context.getConfiguration();
+
+        LoggerConfig packageLoggerConfig = config.getLoggerConfig("com.alkl1m.auditlogspringbootautoconfigure.aspect");
+
+        Appender kafkaAppender = config.getAppender("KafkaAppender");
+        if (kafkaAppender == null) {
+            kafkaAppender = KafkaAppender
+                    .createAppender(
+                            "KafkaAppender",
+                            null,
+                            "true",
+                            "send-auditlog-event",
+                            "true",
+                            "false",
+                            null,
+                            new Property[]{}
+                    );
+            kafkaAppender.start();
+            config.addAppender(kafkaAppender);
+        }
+
+        packageLoggerConfig.addAppender(kafkaAppender, Level.INFO, null);
+
+        context.updateLoggers();
+    }
+
 }
 
