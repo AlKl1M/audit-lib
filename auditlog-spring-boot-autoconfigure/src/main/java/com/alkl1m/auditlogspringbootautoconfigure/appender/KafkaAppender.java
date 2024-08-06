@@ -57,6 +57,7 @@ public class KafkaAppender extends AbstractAppender {
                 .collect(Collectors.toMap(Property::getName, Property::getValue));
 
         KafkaProducer<String, String> producer = enableKafka ? new KafkaProducer<>(props) : null;
+        producer.initTransactions();
         Layout<? extends Serializable> effectiveLayout = layout != null ? layout : JsonLayout.createDefaultLayout();
 
         return new KafkaAppender(name, filter, effectiveLayout, ignoreExceptions, producer, topic, sync);
@@ -73,12 +74,16 @@ public class KafkaAppender extends AbstractAppender {
     public void append(LogEvent event) {
         if (producer != null) {
             try {
-                Future<RecordMetadata> result = producer.send(new ProducerRecord<>(topic, getLayout().toSerializable(event).toString()));
+                producer.beginTransaction();
+                String message = event.getMessage().getFormattedMessage();
+                Future<RecordMetadata> result = producer.send(new ProducerRecord<>(topic, message));
                 if (syncSend) {
                     result.get();
                 }
+                producer.commitTransaction();
             } catch (Exception e) {
                 LOGGER.error("Unable to write to kafka for appender [{}].", getName(), e);
+                producer.abortTransaction();
                 throw new AppenderLoggingException("Unable to write to kafka in appender: " + e.getMessage(), e);
             }
         }

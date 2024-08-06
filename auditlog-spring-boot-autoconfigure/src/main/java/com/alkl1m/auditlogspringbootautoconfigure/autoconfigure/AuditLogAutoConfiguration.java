@@ -79,37 +79,42 @@ public class AuditLogAutoConfiguration implements WebMvcConfigurer {
     private void configureAppender() {
         LoggerContext context = (LoggerContext) LogManager.getContext(false);
         org.apache.logging.log4j.core.config.Configuration config = context.getConfiguration();
-
         LoggerConfig packageLoggerConfig = config.getLoggerConfig("com.alkl1m.auditlogspringbootautoconfigure.aspect");
 
         if (properties.isKafkaLogEnabled()) {
             Appender kafkaAppender = config.getAppender("KafkaAppender");
             if (kafkaAppender == null) {
-                Property[] kafkaProperties = new Property[] {
-                        Property.createProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, properties.getBootstrapServers()),
-                        Property.createProperty(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer"),
-                        Property.createProperty(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer")
-                };
-                kafkaAppender = KafkaAppender
-                        .createAppender(
-                                "KafkaAppender",
-                                null,
-                                "true",
-                                properties.getTopic(),
-                                "true",
-                                "false",
-                                null,
-                                kafkaProperties
-
-                        );
-                kafkaAppender.start();
-                config.addAppender(kafkaAppender);
+                kafkaAppender = createKafkaAppender(config);
             }
-
             packageLoggerConfig.addAppender(kafkaAppender, Level.INFO, null);
         }
 
         context.updateLoggers();
+    }
+
+    private Appender createKafkaAppender(org.apache.logging.log4j.core.config.Configuration config) {
+        Property[] kafkaProperties = new Property[]{
+                Property.createProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, properties.getBootstrapServers()),
+                Property.createProperty(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer"),
+                Property.createProperty(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer"),
+                Property.createProperty(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, "true"),
+                Property.createProperty(ProducerConfig.TRANSACTIONAL_ID_CONFIG, "auditlog-id")
+        };
+
+        Appender kafkaAppender = KafkaAppender.createAppender(
+                "KafkaAppender",
+                null,
+                null,
+                properties.getTopic(),
+                null,
+                null,
+                null,
+                kafkaProperties
+        );
+
+        kafkaAppender.start();
+        config.addAppender(kafkaAppender);
+        return kafkaAppender;
     }
 
 }
