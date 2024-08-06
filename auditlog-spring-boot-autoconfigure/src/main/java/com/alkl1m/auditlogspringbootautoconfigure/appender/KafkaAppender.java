@@ -49,21 +49,17 @@ public class KafkaAppender extends AbstractAppender {
                                                @PluginAttribute("syncsend") String syncSend,
                                                @PluginElement("Layout") Layout<? extends Serializable> layout,
                                                @PluginElement("Properties") Property[] properties) {
-        boolean ignoreExceptions = true;
-        boolean enableKafka = true;
-        boolean sync = false;
+        boolean ignoreExceptions = Booleans.parseBoolean(ignore, true);
+        boolean enableKafka = Booleans.parseBoolean(enable, true);
+        boolean sync = Booleans.parseBoolean(syncSend, false);
 
-        Map<String, Object> props = new HashMap<>();
-
-
-        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:29092");
-        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");
-        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");
+        Map<String, Object> props = Arrays.stream(properties)
+                .collect(Collectors.toMap(Property::getName, Property::getValue));
 
         KafkaProducer<String, String> producer = enableKafka ? new KafkaProducer<>(props) : null;
         Layout<? extends Serializable> effectiveLayout = layout != null ? layout : JsonLayout.createDefaultLayout();
 
-        return new KafkaAppender(name, filter, effectiveLayout, ignoreExceptions, producer, "send-auditlog-event", sync);
+        return new KafkaAppender(name, filter, effectiveLayout, ignoreExceptions, producer, topic, sync);
     }
 
     @Override

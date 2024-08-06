@@ -5,12 +5,14 @@ import com.alkl1m.auditlogspringbootautoconfigure.advice.HttpResponseLoggingAdvi
 import com.alkl1m.auditlogspringbootautoconfigure.annotation.EnableHttpLogging;
 import com.alkl1m.auditlogspringbootautoconfigure.appender.KafkaAppender;
 import jakarta.annotation.PostConstruct;
+import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Appender;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.apache.logging.log4j.core.config.Property;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,12 +26,15 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
  * @author alkl1m
  */
 @Configuration
+@EnableConfigurationProperties(AuditLogProperties.class)
 public class AuditLogAutoConfiguration implements WebMvcConfigurer {
 
     private final ApplicationContext applicationContext;
+    private final AuditLogProperties properties;
 
-    public AuditLogAutoConfiguration(ApplicationContext applicationContext) {
+    public AuditLogAutoConfiguration(ApplicationContext applicationContext, AuditLogProperties properties) {
         this.applicationContext = applicationContext;
+        this.properties = properties;
     }
 
     /**
@@ -77,24 +82,32 @@ public class AuditLogAutoConfiguration implements WebMvcConfigurer {
 
         LoggerConfig packageLoggerConfig = config.getLoggerConfig("com.alkl1m.auditlogspringbootautoconfigure.aspect");
 
-        Appender kafkaAppender = config.getAppender("KafkaAppender");
-        if (kafkaAppender == null) {
-            kafkaAppender = KafkaAppender
-                    .createAppender(
-                            "KafkaAppender",
-                            null,
-                            "true",
-                            "send-auditlog-event",
-                            "true",
-                            "false",
-                            null,
-                            new Property[]{}
-                    );
-            kafkaAppender.start();
-            config.addAppender(kafkaAppender);
-        }
+        if (properties.isKafkaLogEnabled()) {
+            Appender kafkaAppender = config.getAppender("KafkaAppender");
+            if (kafkaAppender == null) {
+                Property[] kafkaProperties = new Property[] {
+                        Property.createProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, properties.getBootstrapServers()),
+                        Property.createProperty(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer"),
+                        Property.createProperty(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer")
+                };
+                kafkaAppender = KafkaAppender
+                        .createAppender(
+                                "KafkaAppender",
+                                null,
+                                "true",
+                                properties.getTopic(),
+                                "true",
+                                "false",
+                                null,
+                                kafkaProperties
 
-        packageLoggerConfig.addAppender(kafkaAppender, Level.INFO, null);
+                        );
+                kafkaAppender.start();
+                config.addAppender(kafkaAppender);
+            }
+
+            packageLoggerConfig.addAppender(kafkaAppender, Level.INFO, null);
+        }
 
         context.updateLoggers();
     }
