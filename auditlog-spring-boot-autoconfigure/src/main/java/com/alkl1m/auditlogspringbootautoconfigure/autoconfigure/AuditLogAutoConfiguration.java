@@ -94,11 +94,12 @@ public class AuditLogAutoConfiguration implements WebMvcConfigurer {
 
     private Appender createKafkaAppender(org.apache.logging.log4j.core.config.Configuration config) {
         Property[] kafkaProperties = new Property[]{
+                Property.createProperty(ProducerConfig.ACKS_CONFIG, "all"),
+                Property.createProperty(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, "true"),
+                Property.createProperty(ProducerConfig.TRANSACTIONAL_ID_CONFIG, "auditlog-id"),
                 Property.createProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, properties.getBootstrapServers()),
                 Property.createProperty(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer"),
                 Property.createProperty(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer"),
-                Property.createProperty(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, "true"),
-                Property.createProperty(ProducerConfig.TRANSACTIONAL_ID_CONFIG, "auditlog-id")
         };
 
         Appender kafkaAppender = KafkaAppender.createAppender(
@@ -106,7 +107,6 @@ public class AuditLogAutoConfiguration implements WebMvcConfigurer {
                 null,
                 null,
                 properties.getTopic(),
-                null,
                 null,
                 null,
                 kafkaProperties

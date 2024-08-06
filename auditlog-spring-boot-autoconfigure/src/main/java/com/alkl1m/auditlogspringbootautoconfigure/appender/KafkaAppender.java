@@ -45,19 +45,19 @@ public class KafkaAppender extends AbstractAppender {
                                                @PluginElement("Filter") Filter filter,
                                                @PluginAttribute("ignoreExceptions") String ignore,
                                                @PluginAttribute("topic") String topic,
-                                               @PluginAttribute("enable") String enable,
                                                @PluginAttribute("syncsend") String syncSend,
                                                @PluginElement("Layout") Layout<? extends Serializable> layout,
                                                @PluginElement("Properties") Property[] properties) {
         boolean ignoreExceptions = Booleans.parseBoolean(ignore, true);
-        boolean enableKafka = Booleans.parseBoolean(enable, true);
         boolean sync = Booleans.parseBoolean(syncSend, false);
 
         Map<String, Object> props = Arrays.stream(properties)
                 .collect(Collectors.toMap(Property::getName, Property::getValue));
 
-        KafkaProducer<String, String> producer = enableKafka ? new KafkaProducer<>(props) : null;
+        KafkaProducer<String, String> producer = new KafkaProducer<>(props);
+
         producer.initTransactions();
+
         Layout<? extends Serializable> effectiveLayout = layout != null ? layout : JsonLayout.createDefaultLayout();
 
         return new KafkaAppender(name, filter, effectiveLayout, ignoreExceptions, producer, topic, sync);
