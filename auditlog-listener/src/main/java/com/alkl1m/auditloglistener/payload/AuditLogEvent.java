@@ -1,0 +1,20 @@
+package com.alkl1m.auditloglistener.payload;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.io.Serializable;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class AuditLogEvent implements Serializable {
+
+    private String serverSource;
+    private String method;
+    private Object[] args;
+    private Object result;
+    private String exception;
+
+}
