@@ -71,11 +71,17 @@ public class AuditLogAutoConfiguration implements WebMvcConfigurer {
         return applicationContext.getBeansWithAnnotation(EnableHttpLogging.class).isEmpty() ? null : new HttpResponseLoggingAdvice();
     }
 
+    /**
+     * Метод для конфигурации логера.
+     */
     @PostConstruct
     public void configureLogger() {
         configureAppender();
     }
 
+    /**
+     * Метод для конфигурации appender'а. Добавляет их в зависимости от флагов в файле свойств.
+     */
     private void configureAppender() {
         LoggerContext context = (LoggerContext) LogManager.getContext(false);
         org.apache.logging.log4j.core.config.Configuration config = context.getConfiguration();
@@ -92,6 +98,13 @@ public class AuditLogAutoConfiguration implements WebMvcConfigurer {
         context.updateLoggers();
     }
 
+    /**
+     * Метод для создания KafkaAppender, который отправляет сообщения
+     * в соответствии с семантикой exactly-once.
+     *
+     * @param config конфиг логера.
+     * @return KafkaAppender.
+     */
     private Appender createKafkaAppender(org.apache.logging.log4j.core.config.Configuration config) {
         Property[] kafkaProperties = new Property[]{
                 Property.createProperty(ProducerConfig.ACKS_CONFIG, "all"),
@@ -107,7 +120,6 @@ public class AuditLogAutoConfiguration implements WebMvcConfigurer {
                 null,
                 null,
                 properties.getTopic(),
-                null,
                 null,
                 kafkaProperties
         );

@@ -86,16 +86,4 @@ public class AuditLogAspect {
         }
     }
 
-    /**
-     * Метод для преобразования массива аргументов в строку.
-     *
-     * @param args массив аргументов.
-     * @return строка, содержащая значения аргументов через запятую.
-     */
-    private String argsToString(Object[] args) {
-        return Arrays.stream(args)
-                .map(arg -> (arg != null) ? arg.toString() : "null")
-                .collect(Collectors.joining(", "));
-    }
-
 }
