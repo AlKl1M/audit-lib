@@ -5,7 +5,10 @@ import com.alkl1m.auditloglistener.payload.AuditLogEvent;
 import com.alkl1m.auditloglistener.repository.AuditLogRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.support.Acknowledgment;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
 
@@ -16,16 +19,17 @@ public class KafkaMessageConsumer {
     private final AuditLogRepository auditLogRepository;
 
     @KafkaListener(topics = "send-auditlog-event", groupId = "group-1")
-    public void consume(AuditLogEvent logMessage) {
-
+    @Transactional("transactionManager")
+    public void consume(@Payload AuditLogEvent auditLogEvent,
+                        Acknowledgment acknowledgment) {
         AuditLog auditLog = AuditLog.builder()
-                .serverSource(logMessage.getServerSource())
-                .method(logMessage.getMethod())
-                .args(Arrays.toString(logMessage.getArgs()))
-                .result(logMessage.getResult().toString())
-                .exception(logMessage.getException())
+                .serverSource(auditLogEvent.getServerSource())
+                .method(auditLogEvent.getMethod())
+                .args(Arrays.toString(auditLogEvent.getArgs()))
+                .result(auditLogEvent.getResult().toString())
+                .exception(auditLogEvent.getException())
                 .build();
-
         auditLogRepository.save(auditLog);
+        acknowledgment.acknowledge();
     }
 }
