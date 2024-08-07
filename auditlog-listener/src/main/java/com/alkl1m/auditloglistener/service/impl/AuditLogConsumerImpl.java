@@ -1,8 +1,9 @@
-package com.alkl1m.auditloglistener.service;
+package com.alkl1m.auditloglistener.service.impl;
 
 import com.alkl1m.auditloglistener.entity.AuditLog;
 import com.alkl1m.auditloglistener.payload.AuditLogEvent;
 import com.alkl1m.auditloglistener.repository.AuditLogRepository;
+import com.alkl1m.auditloglistener.service.AuditLogConsumer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
@@ -14,10 +15,11 @@ import java.util.Arrays;
 
 @Service
 @RequiredArgsConstructor
-public class KafkaMessageConsumer {
+public class AuditLogConsumerImpl implements AuditLogConsumer {
 
     private final AuditLogRepository auditLogRepository;
 
+    @Override
     @KafkaListener(topics = "send-auditlog-event", groupId = "group-1")
     @Transactional("transactionManager")
     public void consume(@Payload AuditLogEvent auditLogEvent,
