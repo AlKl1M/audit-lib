@@ -6,6 +6,7 @@ import com.alkl1m.auditloglistener.repository.AuditLogRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.kafka.clients.producer.ProducerConfig;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -36,9 +37,6 @@ class AuditLogConsumerImplIntegrationalTest {
 
     @Container
     static PostgreSQLContainer<?> postgreSQLContainer = new PostgreSQLContainer<>("postgres:12")
-            .withUsername("username")
-            .withPassword("password")
-            .withExposedPorts(5432)
             .withReuse(true);
 
     @Container
@@ -76,18 +74,12 @@ class AuditLogConsumerImplIntegrationalTest {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
-    void save_log() throws InterruptedException, JsonProcessingException {
+    void testConsume_withValidPayload_returnsSavedData() throws InterruptedException, JsonProcessingException {
         String bootstrapServers = kafkaContainer.getBootstrapServers();
         Object[] args = new Object[]{"arg1", "arg2"};
         AuditLogEvent event = new AuditLogEvent("server1", "GET", args, "success", null);
 
-        Map<String, Object> configProps = new HashMap<>();
-        configProps.put(ProducerConfig.ACKS_CONFIG, "all");
-        configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        configProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");
-        configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");
-        ProducerFactory<String, String> producerFactory = new DefaultKafkaProducerFactory<>(configProps);
-        KafkaTemplate<String, String> kafkaTemplate = new KafkaTemplate<>(producerFactory);
+        KafkaTemplate<String, String> kafkaTemplate = getKafkaTemplate(bootstrapServers);
         String jsonLogEntry = objectMapper.writeValueAsString(event);
 
         SECONDS.sleep(5);
@@ -99,5 +91,16 @@ class AuditLogConsumerImplIntegrationalTest {
         assertEquals(auditLog.get().getServerSource(), event.getServerSource());
         assertEquals(auditLog.get().getMethod(), event.getMethod());
         assertEquals(auditLog.get().getException(), event.getException());
+    }
+
+    @NotNull
+    private static KafkaTemplate<String, String> getKafkaTemplate(String bootstrapServers) {
+        Map<String, Object> configProps = new HashMap<>();
+        configProps.put(ProducerConfig.ACKS_CONFIG, "all");
+        configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        configProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");
+        configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");
+        ProducerFactory<String, String> producerFactory = new DefaultKafkaProducerFactory<>(configProps);
+        return new KafkaTemplate<>(producerFactory);
     }
 }
