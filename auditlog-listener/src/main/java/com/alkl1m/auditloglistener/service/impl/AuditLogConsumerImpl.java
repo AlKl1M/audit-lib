@@ -13,12 +13,23 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
 
+/**
+ * Сервис для работы с AuditLog.
+ *
+ * @author alkl1m
+ */
 @Service
 @RequiredArgsConstructor
 public class AuditLogConsumerImpl implements AuditLogConsumer {
 
     private final AuditLogRepository auditLogRepository;
 
+    /**
+     * Метод для обработки сообщения из Kafka-топика send-auditlog-event.
+     *
+     * @param auditLogEvent событие, содержащее информацию об аудите.
+     * @param acknowledgment объект для ручного коммита.
+     */
     @Override
     @KafkaListener(topics = "send-auditlog-event", groupId = "group-1")
     @Transactional("transactionManager")

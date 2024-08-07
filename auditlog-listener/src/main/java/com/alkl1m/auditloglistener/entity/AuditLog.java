@@ -11,6 +11,11 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * Сущность для хранения информации о логах сервисов.
+ *
+ * @author alkl1m
+ */
 @Data
 @Entity
 @Builder

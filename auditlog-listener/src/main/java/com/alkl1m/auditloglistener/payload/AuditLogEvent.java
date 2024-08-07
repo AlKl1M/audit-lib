@@ -6,6 +6,11 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 
+/**
+ * Event который приходит из кафки для отображения логов сервисов.
+ *
+ * @author alkl1m
+ */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor

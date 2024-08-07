@@ -17,6 +17,11 @@ import org.springframework.kafka.support.serializer.JsonDeserializer;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Конфиг для Кафки.
+ *
+ * @author alkl1m
+ */
 @Configuration
 @EnableKafka
 public class KafkaConfig {
@@ -36,6 +41,12 @@ public class KafkaConfig {
     @Value("${spring.kafka.consumer.isolation-level}")
     private String isolationLevel;
 
+    /**
+     * Фабрика для Consumer, которая создает DefaultKafkaConsumerFactory
+     * с семантикой exactly-once.
+     *
+     * @return ConsumerFactory.
+     */
     @Bean
     public ConsumerFactory<String, AuditLogEvent> consumerFactory() {
         Map<String, Object> config = new HashMap<>();
@@ -49,6 +60,12 @@ public class KafkaConfig {
         return new DefaultKafkaConsumerFactory<>(config, new StringDeserializer(), new JsonDeserializer<>(AuditLogEvent.class));
     }
 
+    /**
+     * Фабрика listener, которые создаются по consumerFactory
+     * и устанавливают AcsMode в MANUAL_IMMEDIATE.
+     *
+     * @return ConcurrentKafkaListenerContainerFactory.
+     */
     @Bean
     public ConcurrentKafkaListenerContainerFactory<String, AuditLogEvent> kafkaListenerContainerFactory() {
         ConcurrentKafkaListenerContainerFactory<String, AuditLogEvent> factory = new ConcurrentKafkaListenerContainerFactory<>();
