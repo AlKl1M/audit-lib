@@ -2,6 +2,7 @@ package com.alkl1m.auditlogspringbootautoconfigure.advice;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import jakarta.annotation.Nullable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -76,6 +77,7 @@ public class HttpRequestLoggingAdvice implements RequestBodyAdvice {
                                 @NonNull Type targetType,
                                 @NonNull Class<? extends HttpMessageConverter<?>> converterType) {
         ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule());
         try {
             logger.info("Request body: %s".formatted(Objects.isNull(body) ? "{}" : mapper.writeValueAsString(body)));
         } catch (JsonProcessingException e) {

@@ -1,12 +1,16 @@
 package com.alkl1m.auditlogspringbootautoconfigure.aspect;
 
 import com.alkl1m.auditlogspringbootautoconfigure.annotation.AuditLog;
+import com.alkl1m.auditlogspringbootautoconfigure.domain.AuditLogEntry;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.logging.LogLevel;
 import org.springframework.stereotype.Component;
 
@@ -24,6 +28,10 @@ import java.util.stream.Collectors;
 public class AuditLogAspect {
 
     private Logger logger = LogManager.getLogger(AuditLogAspect.class);
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    @Value("${spring.application.name}")
+    private String applicationName;
 
     /**
      * Определяет точку среза для методов, помеченных @AuditLog.
@@ -46,16 +54,18 @@ public class AuditLogAspect {
     public Object logMethodData(ProceedingJoinPoint joinPoint, AuditLog auditLog) throws Throwable {
         String methodName = joinPoint.getSignature().getName();
         Object[] args = joinPoint.getArgs();
-
-        String logMessage;
+        objectMapper.registerModule(new JavaTimeModule());
+        AuditLogEntry logEntry;
         try {
             Object result = joinPoint.proceed();
-            logMessage = "Method: " + methodName + ", Args: " + argsToString(args) + ", Result: " + (result != null ? result.toString() : "void");
-            logMessage(logMessage, auditLog.logLevel());
+            logEntry = new AuditLogEntry(applicationName, methodName, args, result, null);
+            String jsonLogEntry = objectMapper.writeValueAsString(logEntry);
+            logMessage(jsonLogEntry, auditLog.logLevel());
             return result;
         } catch (Throwable e) {
-            logMessage = "Exception in method: " + methodName + ", Args: " + argsToString(args) + ", Exception: " + e.getMessage();
-            logMessage(logMessage, LogLevel.ERROR);
+            logEntry = new AuditLogEntry(applicationName, methodName, args, null, e.getMessage());
+            String jsonLogEntry = objectMapper.writeValueAsString(logEntry);
+            logMessage(jsonLogEntry, LogLevel.ERROR);
             throw e;
         }
     }
@@ -74,18 +84,6 @@ public class AuditLogAspect {
             case TRACE -> logger.trace(message);
             default -> logger.info(message);
         }
-    }
-
-    /**
-     * Метод для преобразования массива аргументов в строку.
-     *
-     * @param args массив аргументов.
-     * @return строка, содержащая значения аргументов через запятую.
-     */
-    private String argsToString(Object[] args) {
-        return Arrays.stream(args)
-                .map(arg -> (arg != null) ? arg.toString() : "null")
-                .collect(Collectors.joining(", "));
     }
 
 }
