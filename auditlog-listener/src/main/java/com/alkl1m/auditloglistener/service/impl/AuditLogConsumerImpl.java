@@ -31,7 +31,7 @@ public class AuditLogConsumerImpl implements AuditLogConsumer {
      * @param acknowledgment объект для ручного коммита.
      */
     @Override
-    @KafkaListener(topics = "send-auditlog-event", groupId = "group-1")
+    @KafkaListener(id = "auditLogEvent", topics = "send-auditlog-event", groupId = "group-1")
     @Transactional("transactionManager")
     public void consume(@Payload AuditLogEvent auditLogEvent,
                         Acknowledgment acknowledgment) {
