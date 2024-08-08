@@ -1,0 +1,38 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1
+      author: alkl1m
+      changes:
+        - createTable:
+            tableName: audit_log
+            ifNotExists: true
+            columns:
+              - column:
+                  name: id
+                  type: serial
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: server_source
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: method
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: args
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: result
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: exception
+                  type: text
