@@ -14,8 +14,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.kafka.support.Acknowledgment;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class AuditLogConsumerImplTest {
@@ -48,6 +47,27 @@ class AuditLogConsumerImplTest {
         assertEquals("GET", savedAuditLog.getMethod());
         assertEquals("success", savedAuditLog.getResult());
         assertNull(savedAuditLog.getException());
+    }
+
+    @Test
+    void testConsume_withSuccessOnSecondAttempt_commitsOneTime() {
+        Object[] args = new Object[]{"arg1", "arg2"};
+        AuditLogEvent event = new AuditLogEvent("server1", "GET", args, "success", null);
+
+        doThrow(new RuntimeException("Some error"))
+                .when(auditLogRepository).save(any(AuditLog.class));
+
+        assertThrows(RuntimeException.class, () -> {
+            auditLogConsumer.consume(event, acknowledgment);
+        });
+
+        verify(acknowledgment, times(0)).acknowledge();
+        reset(auditLogRepository);
+        when(auditLogRepository.save(any(AuditLog.class))).thenReturn(new AuditLog());
+
+        auditLogConsumer.consume(event, acknowledgment);
+        verify(auditLogRepository, times(1)).save(any(AuditLog.class));
+        verify(acknowledgment, times(1)).acknowledge();
     }
 
 }
