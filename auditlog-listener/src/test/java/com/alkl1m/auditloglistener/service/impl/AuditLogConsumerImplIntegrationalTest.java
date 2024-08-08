@@ -149,7 +149,7 @@ class AuditLogConsumerImplIntegrationalTest {
 
         List<AuditLog> auditLogs = auditLogRepository.findAll();
 
-        assertEquals(auditLogs.size(), 3);
+        assertEquals(3, auditLogs.size());
     }
 
     @NotNull

@@ -3,7 +3,6 @@ package com.alkl1m.auditloglistener.service.impl;
 import com.alkl1m.auditloglistener.entity.AuditLog;
 import com.alkl1m.auditloglistener.payload.AuditLogEvent;
 import com.alkl1m.auditloglistener.repository.AuditLogRepository;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
