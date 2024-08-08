@@ -76,4 +76,33 @@ class KafkaAppenderTest {
         kafkaAppender.stop();
         verify(producer).close();
     }
+
+    @Test
+    public void testAppend_withValidPayload_returnsCommitTransaction() {
+        LogEvent event = Log4jLogEvent.newBuilder()
+                .setMessage(new SimpleMessage("Test message"))
+                .build();
+        kafkaAppender.append(event);
+
+        verify(producer).beginTransaction();
+        ArgumentCaptor<ProducerRecord<String, String>> captor = ArgumentCaptor.forClass(ProducerRecord.class);
+        verify(producer).send(captor.capture());
+        assertEquals("Test message", captor.getValue().value());
+        verify(producer).commitTransaction();
+    }
+
+    @Test
+    public void testAppend_withThrowedException_returnsAbortedTransaction() {
+        LogEvent event = Log4jLogEvent.newBuilder()
+                .setMessage(new SimpleMessage("Test message"))
+                .build();
+        doThrow(new RuntimeException("Kafka error")).when(producer).send(any());
+
+        Exception exception = assertThrows(AppenderLoggingException.class, () -> {
+            kafkaAppender.append(event);
+        });
+
+        assertEquals("Не получается передать сообщения в кафку в аппендере: Kafka error", exception.getMessage());
+        verify(producer).abortTransaction();
+    }
 }
