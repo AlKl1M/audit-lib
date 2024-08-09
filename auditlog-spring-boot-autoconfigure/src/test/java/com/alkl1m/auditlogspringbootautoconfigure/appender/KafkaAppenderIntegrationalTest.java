@@ -18,9 +18,11 @@ import org.apache.logging.log4j.message.SimpleMessage;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
+import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.shaded.com.google.common.collect.ImmutableMap;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -37,10 +39,11 @@ class KafkaAppenderIntegrationalTest {
     public static final String TOPIC_NAME_SEND_ORDER= "send-auditlog-event";
     private final ObjectMapper objectMapper = new ObjectMapper();
     private static String bootstrapServers;
+    private static KafkaContainerCluster cluster;
 
     @BeforeAll
     public static void setUp() {
-        KafkaContainerCluster cluster = new KafkaContainerCluster("7.4.0", 3, 2);
+        cluster = new KafkaContainerCluster("latest", 3, 2);
         cluster.start();
         bootstrapServers = cluster.getBootstrapServers();
     }
@@ -120,6 +123,53 @@ class KafkaAppenderIntegrationalTest {
         consumer.close();
     }
 
+    @Test
+    void testProduce_withLaggedBroker_returnsSavedData() throws IOException, InterruptedException {
+        Object[] args = new Object[]{"arg1", "arg2"};
+        AuditLogEntry entry = new AuditLogEntry("server1", "GET", args, "success", null);
+        LogEvent event = Log4jLogEvent.newBuilder()
+                .setMessage(new SimpleMessage(objectMapper.writeValueAsString(entry)))
+                .build();
+
+        Property[] kafkaProperties = createKafkaProperties(bootstrapServers);
+
+        KafkaConsumer<String, AuditLogEntry> consumer = new KafkaConsumer<>(ImmutableMap.of(
+                ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers,
+                ConsumerConfig.GROUP_ID_CONFIG, "test-group-id",
+                ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest"),
+                new StringDeserializer(),
+                new JsonDeserializer<>(AuditLogEntry.class));
+
+        Appender kafkaAppender = createKafkaAppender(kafkaProperties);
+
+        consumer.subscribe(Collections.singletonList(TOPIC_NAME_SEND_ORDER));
+
+        kafkaAppender.start();
+
+        pauseKafkaBrokers();
+
+        Thread.sleep(10000);
+
+        Thread appendThread = new Thread(() -> kafkaAppender.append(event));
+        Thread unlockThread = new Thread(this::unpauseKafkaBrokersAfterDelay);
+
+        appendThread.start();
+        unlockThread.start();
+
+        appendThread.join();
+        unlockThread.join();
+
+        ConsumerRecords<String, AuditLogEntry> records = consumer.poll(Duration.ofMillis(10000L));
+        consumer.close();
+
+        assertEquals(1, records.count());
+        for (ConsumerRecord<String, AuditLogEntry> record : records) {
+            assertEquals(record.value().getServerSource(), entry.getServerSource());
+            assertEquals(record.value().getResult(), entry.getResult());
+            assertEquals(record.value().getException(), entry.getException());
+        }
+    }
+
 
     private Property[] createKafkaProperties(String bootstrapServers) {
         return new Property[]{
@@ -141,6 +191,24 @@ class KafkaAppenderIntegrationalTest {
                 null,
                 kafkaProperties
         );
+    }
+
+    private void pauseKafkaBrokers() throws InterruptedException {
+        for (KafkaContainer appender : cluster.getBrokers()) {
+            appender.getDockerClient().pauseContainerCmd(appender.getContainerId()).exec();
+        }
+        Thread.sleep(10000);
+    }
+
+    private void unpauseKafkaBrokersAfterDelay() {
+        try {
+            Thread.sleep(10000);
+            for (KafkaContainer appender : cluster.getBrokers()) {
+                appender.getDockerClient().unpauseContainerCmd(appender.getContainerId()).exec();
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
 
 }
