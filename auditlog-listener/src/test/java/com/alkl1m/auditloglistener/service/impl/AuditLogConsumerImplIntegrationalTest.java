@@ -29,7 +29,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
 
 @Testcontainers
@@ -85,9 +84,9 @@ class AuditLogConsumerImplIntegrationalTest {
         KafkaTemplate<String, String> kafkaTemplate = getKafkaTemplate(bootstrapServers);
         String jsonLogEntry = objectMapper.writeValueAsString(event);
 
-        SECONDS.sleep(5);
+        Thread.sleep(5000);
         kafkaTemplate.send(TOPIC_NAME_SEND_ORDER, jsonLogEntry);
-        SECONDS.sleep(5);
+        Thread.sleep(5000);
 
         List<AuditLog> auditLogs = auditLogRepository.findAll();
 
@@ -107,13 +106,13 @@ class AuditLogConsumerImplIntegrationalTest {
         KafkaTemplate<String, String> kafkaTemplate = getKafkaTemplate(bootstrapServers);
         String jsonLogEntry = objectMapper.writeValueAsString(event);
 
-        SECONDS.sleep(5);
+        Thread.sleep(5000);
         kafkaTemplate.send(TOPIC_NAME_SEND_ORDER, jsonLogEntry);
-        SECONDS.sleep(5);
+        Thread.sleep(5000);
 
         kafkaListenerEndpointRegistry.getListenerContainer("auditLogEvent").start();
 
-        SECONDS.sleep(5);
+        Thread.sleep(5000);
 
         List<AuditLog> auditLogs = auditLogRepository.findAll();
 
@@ -137,15 +136,15 @@ class AuditLogConsumerImplIntegrationalTest {
         String jsonLogEntry2 = objectMapper.writeValueAsString(event2);
         String jsonLogEntry3 = objectMapper.writeValueAsString(event3);
 
-        SECONDS.sleep(5);
+        Thread.sleep(5000);
         kafkaTemplate.send(TOPIC_NAME_SEND_ORDER, jsonLogEntry1);
         kafkaTemplate.send(TOPIC_NAME_SEND_ORDER, jsonLogEntry3);
         kafkaTemplate.send(TOPIC_NAME_SEND_ORDER, jsonLogEntry2);
-        SECONDS.sleep(5);
+        Thread.sleep(5000);
 
         kafkaListenerEndpointRegistry.getListenerContainer("auditLogEvent").start();
 
-        SECONDS.sleep(5);
+        Thread.sleep(5000);
 
         List<AuditLog> auditLogs = auditLogRepository.findAll();
 
