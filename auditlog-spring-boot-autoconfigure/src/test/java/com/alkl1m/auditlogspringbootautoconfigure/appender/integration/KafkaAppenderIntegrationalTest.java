@@ -34,16 +34,17 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @Testcontainers
 class KafkaAppenderIntegrationalTest {
 
-    public static final String TOPIC_NAME_SEND_ORDER= "send-auditlog-event";
+    public static final String TOPIC_NAME_SEND_ORDER = "send-auditlog-event";
+    private static final int NUM_BROKERS = 3;
+    private static final int NUM_TOPIC_PARTITIONS = 2;
+    private static final KafkaContainerCluster CLUSTER = new KafkaContainerCluster("latest", NUM_BROKERS, NUM_TOPIC_PARTITIONS);
     private final ObjectMapper objectMapper = new ObjectMapper();
     private static String bootstrapServers;
-    private static KafkaContainerCluster cluster;
 
     @BeforeAll
     public static void setUp() {
-        cluster = new KafkaContainerCluster("latest", 3, 2);
-        cluster.start();
-        bootstrapServers = cluster.getBootstrapServers();
+        CLUSTER.start();
+        bootstrapServers = CLUSTER.getBootstrapServers();
     }
 
     @Test
@@ -107,7 +108,7 @@ class KafkaAppenderIntegrationalTest {
 
         Map<Integer, List<String>> partitionMessages = new HashMap<>();
 
-        for (int i = 0; i < 2; i++) {
+        for (int i = 0; i < NUM_TOPIC_PARTITIONS; i++) {
             ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(1000));
             records.forEach(record -> {
                 partitionMessages.computeIfAbsent(record.partition(), k -> new ArrayList<>()).add(record.value());

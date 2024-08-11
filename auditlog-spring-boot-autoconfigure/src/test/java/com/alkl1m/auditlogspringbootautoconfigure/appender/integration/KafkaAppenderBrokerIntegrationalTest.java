@@ -17,6 +17,7 @@ import org.apache.logging.log4j.message.SimpleMessage;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
+import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.shaded.com.google.common.collect.ImmutableMap;
 
@@ -30,15 +31,16 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class KafkaAppenderBrokerIntegrationalTest {
 
     public static final String TOPIC_NAME_SEND_ORDER= "send-auditlog-event";
+    private static final int NUM_BROKERS = 3;
+    private static final int NUM_TOPIC_PARTITIONS = 2;
+    private static final KafkaContainerCluster CLUSTER = new KafkaContainerCluster("latest", NUM_BROKERS, NUM_TOPIC_PARTITIONS);
     private final ObjectMapper objectMapper = new ObjectMapper();
     private static String bootstrapServers;
-    private static KafkaContainerCluster isolatedCluster;
 
     @BeforeAll
     public static void setUp() {
-        isolatedCluster = new KafkaContainerCluster("latest", 1, 1);
-        isolatedCluster.start();
-        bootstrapServers = isolatedCluster.getBootstrapServers();
+        CLUSTER.start();
+        bootstrapServers = CLUSTER.getBootstrapServers();
     }
 
     @Test
@@ -49,7 +51,7 @@ public class KafkaAppenderBrokerIntegrationalTest {
                 .setMessage(new SimpleMessage(objectMapper.writeValueAsString(entry)))
                 .build();
 
-        Property[] kafkaProperties = IntegrationTestUtils.createKafkaProperties(isolatedCluster.getBootstrapServers());
+        Property[] kafkaProperties = IntegrationTestUtils.createKafkaProperties(CLUSTER.getBootstrapServers());
 
         KafkaConsumer<String, AuditLogEntry> consumer = new KafkaConsumer<>(ImmutableMap.of(
                 ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers,
@@ -64,12 +66,12 @@ public class KafkaAppenderBrokerIntegrationalTest {
 
         kafkaAppender.start();
 
-        IntegrationTestUtils.pauseKafkaBrokers(isolatedCluster);
+        pauseKafkaBrokers(CLUSTER);
 
         Thread.sleep(10000);
 
         Thread appendThread = new Thread(() -> kafkaAppender.append(event));
-        Thread unlockThread = new Thread(() -> IntegrationTestUtils.unpauseKafkaBrokersAfterDelay(isolatedCluster));
+        Thread unlockThread = new Thread(() -> unpauseKafkaBrokersAfterDelay(CLUSTER));
 
         appendThread.start();
         unlockThread.start();
@@ -85,6 +87,24 @@ public class KafkaAppenderBrokerIntegrationalTest {
             assertEquals(record.value().getServerSource(), entry.getServerSource());
             assertEquals(record.value().getResult(), entry.getResult());
             assertEquals(record.value().getException(), entry.getException());
+        }
+    }
+
+    private void pauseKafkaBrokers(KafkaContainerCluster cluster) throws InterruptedException {
+        for (KafkaContainer appender : cluster.getBrokers()) {
+            appender.getDockerClient().pauseContainerCmd(appender.getContainerId()).exec();
+        }
+        Thread.sleep(10000);
+    }
+
+    private void unpauseKafkaBrokersAfterDelay(KafkaContainerCluster cluster) {
+        try {
+            Thread.sleep(10000);
+            for (KafkaContainer appender : cluster.getBrokers()) {
+                appender.getDockerClient().unpauseContainerCmd(appender.getContainerId()).exec();
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
 

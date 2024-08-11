@@ -4,7 +4,6 @@ import com.alkl1m.auditlogspringbootautoconfigure.appender.KafkaAppender;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.logging.log4j.core.Appender;
 import org.apache.logging.log4j.core.config.Property;
-import org.testcontainers.containers.KafkaContainer;
 
 public class IntegrationTestUtils {
 
@@ -28,24 +27,6 @@ public class IntegrationTestUtils {
                 null,
                 kafkaProperties
         );
-    }
-
-    public static void pauseKafkaBrokers(KafkaContainerCluster cluster) throws InterruptedException {
-        for (KafkaContainer appender : cluster.getBrokers()) {
-            appender.getDockerClient().pauseContainerCmd(appender.getContainerId()).exec();
-        }
-        Thread.sleep(10000);
-    }
-
-    public static void unpauseKafkaBrokersAfterDelay(KafkaContainerCluster cluster) {
-        try {
-            Thread.sleep(10000);
-            for (KafkaContainer appender : cluster.getBrokers()) {
-                appender.getDockerClient().unpauseContainerCmd(appender.getContainerId()).exec();
-            }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
     }
 
 }
