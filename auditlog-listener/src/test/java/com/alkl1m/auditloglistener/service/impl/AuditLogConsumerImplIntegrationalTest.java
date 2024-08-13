@@ -78,7 +78,7 @@ class AuditLogConsumerImplIntegrationalTest {
 
     @Test
     void testConsume_withValidPayload_returnsSavedData() throws InterruptedException, JsonProcessingException {
-        Object[] args = new Object[]{"arg1", "arg2"};
+        String[] args = new String[]{"arg1", "arg2"};
         AuditLogEvent event = new AuditLogEvent("server1", "GET", args, "success", null);
 
         KafkaTemplate<String, String> kafkaTemplate = getKafkaTemplate(bootstrapServers);
@@ -100,7 +100,7 @@ class AuditLogConsumerImplIntegrationalTest {
     @Test
     void testConsume_withTwoAttempts_returnsSavedData() throws InterruptedException, JsonProcessingException {
         kafkaListenerEndpointRegistry.getListenerContainer("auditLogEvent").stop();
-        Object[] args = new Object[]{"arg1", "arg2"};
+        String[] args = new String[]{"arg1", "arg2"};
         AuditLogEvent event = new AuditLogEvent("server1", "GET", args, "success", null);
 
         KafkaTemplate<String, String> kafkaTemplate = getKafkaTemplate(bootstrapServers);
@@ -126,7 +126,7 @@ class AuditLogConsumerImplIntegrationalTest {
     @Test
     void testConsume_withThreeEntriesAndTwoAttempts_returnsSavedDataInValidOrder() throws InterruptedException, JsonProcessingException {
         kafkaListenerEndpointRegistry.getListenerContainer("auditLogEvent").stop();
-        Object[] args = new Object[]{"arg1", "arg2"};
+        String[] args = new String[]{"arg1", "arg2"};
         AuditLogEvent event1 = new AuditLogEvent("server1", "GET", args, "success", null);
         AuditLogEvent event2 = new AuditLogEvent("server2", "GET", args, "success", null);
         AuditLogEvent event3 = new AuditLogEvent("server3", "GET", args, "success", null);

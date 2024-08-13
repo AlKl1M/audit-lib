@@ -18,8 +18,8 @@ public class AuditLogEvent implements Serializable {
 
     private String serverSource;
     private String method;
-    private Object[] args;
-    private Object result;
+    private String[] args;
+    private String result;
     private String exception;
 
 }

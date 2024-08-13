@@ -32,7 +32,7 @@ class AuditLogConsumerImplTest {
 
     @Test
     void testConsume_withValidAuditLogEvent_returnsValidData() {
-        Object[] args = new Object[]{"arg1", "arg2"};
+        String[] args = new String[]{"arg1", "arg2"};
         AuditLogEvent event = new AuditLogEvent("server1", "GET", args, "success", null);
 
         auditLogConsumer.consume(event, acknowledgment);
@@ -50,7 +50,7 @@ class AuditLogConsumerImplTest {
 
     @Test
     void testConsume_withSuccessOnSecondAttempt_commitsOneTime() {
-        Object[] args = new Object[]{"arg1", "arg2"};
+        String[] args = new String[]{"arg1", "arg2"};
         AuditLogEvent event = new AuditLogEvent("server1", "GET", args, "success", null);
 
         doThrow(new RuntimeException("Some error"))
