@@ -33,7 +33,7 @@ public class KafkaAppender extends AbstractAppender {
 
     protected KafkaAppender(String name, Filter filter, Layout<? extends Serializable> layout, boolean ignoreExceptions,
                             KafkaProducer<String, String> producer, String topic) {
-        super(name, filter, layout, ignoreExceptions);
+        super(name, filter, layout, ignoreExceptions, Property.EMPTY_ARRAY);
         this.producer = producer;
         this.topic = topic;
     }
