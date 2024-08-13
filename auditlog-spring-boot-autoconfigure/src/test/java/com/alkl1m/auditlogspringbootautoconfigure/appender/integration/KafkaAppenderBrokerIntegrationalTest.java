@@ -25,7 +25,9 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.Collections;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
 
 @Testcontainers
 public class KafkaAppenderBrokerIntegrationalTest {
@@ -68,7 +70,10 @@ public class KafkaAppenderBrokerIntegrationalTest {
 
         pauseKafkaBrokers(CLUSTER);
 
-        Thread.sleep(10000);
+        await().atMost(10, SECONDS).untilAsserted(() -> {
+            ConsumerRecords<String, AuditLogEntry> records = consumer.poll(Duration.ofMillis(100));
+            assertEquals(0, records.count());
+        });
 
         Thread appendThread = new Thread(() -> kafkaAppender.append(event));
         Thread unlockThread = new Thread(() -> unpauseKafkaBrokersAfterDelay(CLUSTER));
@@ -79,15 +84,17 @@ public class KafkaAppenderBrokerIntegrationalTest {
         appendThread.join();
         unlockThread.join();
 
-        ConsumerRecords<String, AuditLogEntry> records = consumer.poll(Duration.ofMillis(10000L));
-        consumer.close();
+        await().atMost(10, SECONDS).untilAsserted(() -> {
+            ConsumerRecords<String, AuditLogEntry> records = consumer.poll(Duration.ofMillis(10000L));
+            assertEquals(1, records.count());
+            for (ConsumerRecord<String, AuditLogEntry> record : records) {
+                assertEquals(record.value().getServerSource(), entry.getServerSource());
+                assertEquals(record.value().getResult(), entry.getResult());
+                assertEquals(record.value().getException(), entry.getException());
+            }
+        });
 
-        assertEquals(1, records.count());
-        for (ConsumerRecord<String, AuditLogEntry> record : records) {
-            assertEquals(record.value().getServerSource(), entry.getServerSource());
-            assertEquals(record.value().getResult(), entry.getResult());
-            assertEquals(record.value().getException(), entry.getException());
-        }
+        consumer.close();
     }
 
     private void pauseKafkaBrokers(KafkaContainerCluster cluster) throws InterruptedException {
