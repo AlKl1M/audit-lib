@@ -29,7 +29,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
 
 @Testcontainers
 @SpringBootTest
@@ -77,28 +80,29 @@ class AuditLogConsumerImplIntegrationalTest {
     }
 
     @Test
-    void testConsume_withValidPayload_returnsSavedData() throws InterruptedException, JsonProcessingException {
+    void testConsume_withValidPayload_returnsSavedData() throws JsonProcessingException {
         String[] args = new String[]{"arg1", "arg2"};
         AuditLogEvent event = new AuditLogEvent("server1", "GET", args, "success", null);
 
         KafkaTemplate<String, String> kafkaTemplate = getKafkaTemplate(bootstrapServers);
         String jsonLogEntry = objectMapper.writeValueAsString(event);
 
-        Thread.sleep(5000);
         kafkaTemplate.send(TOPIC_NAME_SEND_ORDER, jsonLogEntry);
-        Thread.sleep(5000);
 
-        List<AuditLog> auditLogs = auditLogRepository.findAll();
+        await().atMost(10, SECONDS).untilAsserted(() -> {
+            List<AuditLog> auditLogs = auditLogRepository.findAll();
+            assertFalse(auditLogs.isEmpty(), "Audit logs should not be empty");
 
-        for (AuditLog auditLog : auditLogs) {
-            assertEquals(auditLog.getServerSource(), event.getServerSource());
-            assertEquals(auditLog.getMethod(), event.getMethod());
-            assertEquals(auditLog.getException(), event.getException());
-        }
+            for (AuditLog auditLog : auditLogs) {
+                assertEquals(auditLog.getServerSource(), event.getServerSource());
+                assertEquals(auditLog.getMethod(), event.getMethod());
+                assertEquals(auditLog.getException(), event.getException());
+            }
+        });
     }
 
     @Test
-    void testConsume_withTwoAttempts_returnsSavedData() throws InterruptedException, JsonProcessingException {
+    void testConsume_withTwoAttempts_returnsSavedData() throws JsonProcessingException {
         kafkaListenerEndpointRegistry.getListenerContainer("auditLogEvent").stop();
         String[] args = new String[]{"arg1", "arg2"};
         AuditLogEvent event = new AuditLogEvent("server1", "GET", args, "success", null);
@@ -106,25 +110,26 @@ class AuditLogConsumerImplIntegrationalTest {
         KafkaTemplate<String, String> kafkaTemplate = getKafkaTemplate(bootstrapServers);
         String jsonLogEntry = objectMapper.writeValueAsString(event);
 
-        Thread.sleep(5000);
+        await().atMost(5, SECONDS).untilAsserted(() -> {});
+
         kafkaTemplate.send(TOPIC_NAME_SEND_ORDER, jsonLogEntry);
-        Thread.sleep(5000);
+
+        await().atMost(5, SECONDS).untilAsserted(() -> {});
 
         kafkaListenerEndpointRegistry.getListenerContainer("auditLogEvent").start();
 
-        Thread.sleep(5000);
-
-        List<AuditLog> auditLogs = auditLogRepository.findAll();
-
-        for (AuditLog auditLog : auditLogs) {
+        await().atMost(5, SECONDS).untilAsserted(() -> {
+            List<AuditLog> auditLogs = auditLogRepository.findAll();
+            assertEquals(1, auditLogs.size());
+            AuditLog auditLog = auditLogs.get(0);
             assertEquals(auditLog.getServerSource(), event.getServerSource());
             assertEquals(auditLog.getMethod(), event.getMethod());
             assertEquals(auditLog.getException(), event.getException());
-        }
+        });
     }
 
     @Test
-    void testConsume_withThreeEntriesAndTwoAttempts_returnsSavedDataInValidOrder() throws InterruptedException, JsonProcessingException {
+    void testConsume_withThreeEntriesAndTwoAttempts_returnsSavedDataInValidOrder() throws JsonProcessingException {
         kafkaListenerEndpointRegistry.getListenerContainer("auditLogEvent").stop();
         String[] args = new String[]{"arg1", "arg2"};
         AuditLogEvent event1 = new AuditLogEvent("server1", "GET", args, "success", null);
@@ -136,19 +141,20 @@ class AuditLogConsumerImplIntegrationalTest {
         String jsonLogEntry2 = objectMapper.writeValueAsString(event2);
         String jsonLogEntry3 = objectMapper.writeValueAsString(event3);
 
-        Thread.sleep(5000);
+        await().atMost(5, SECONDS).untilAsserted(() -> {});
+
         kafkaTemplate.send(TOPIC_NAME_SEND_ORDER, jsonLogEntry1);
         kafkaTemplate.send(TOPIC_NAME_SEND_ORDER, jsonLogEntry3);
         kafkaTemplate.send(TOPIC_NAME_SEND_ORDER, jsonLogEntry2);
-        Thread.sleep(5000);
+
+        await().atMost(5, SECONDS).untilAsserted(() -> {});
 
         kafkaListenerEndpointRegistry.getListenerContainer("auditLogEvent").start();
 
-        Thread.sleep(5000);
-
-        List<AuditLog> auditLogs = auditLogRepository.findAll();
-
-        assertEquals(3, auditLogs.size());
+        await().atMost(5, SECONDS).untilAsserted(() -> {
+            List<AuditLog> auditLogs = auditLogRepository.findAll();
+            assertEquals(3, auditLogs.size());
+        });
     }
 
     @NotNull
